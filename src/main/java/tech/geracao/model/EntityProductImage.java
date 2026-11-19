@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
+// EntityProductImage — Representa uma imagem associada a um produto.
 @Entity
 @Table(name = "product_images")
 public class EntityProductImage extends PanacheEntityBase {

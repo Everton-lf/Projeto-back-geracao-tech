@@ -1,10 +1,10 @@
 package tech.geracao.view.dtoResponse;
 
+// ProductSearchResponse — Envelope da busca de produtos com dados, total e paginação.
 import java.util.List;
-import java.util.Map;
 
 public record ProductSearchResponse(
-        List<Map<String, Object>> data,
+        List<ProductSearchItem> data,
         long total,
         int limit,
         int page

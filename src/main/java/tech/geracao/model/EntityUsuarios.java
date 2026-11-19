@@ -17,6 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 
+// EntityUsuarios — Representa a entidade de usuário e a tabela users no banco de dados.
 @Data
 @NoArgsConstructor
 @Entity
@@ -51,6 +52,7 @@ public class EntityUsuarios extends PanacheEntityBase {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Aplica o hash BCrypt antes que a senha seja armazenada.
     public void criptografarSenha() {
         if (this.password != null) {
             this.password = BcryptUtil.bcryptHash(this.password);

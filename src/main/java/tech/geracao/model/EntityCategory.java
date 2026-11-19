@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// EntityCategory — Representa uma categoria de produtos exibível no menu ou em filtros.
 @Entity
 @Table(name = "category")
 public class EntityCategory extends PanacheEntityBase {

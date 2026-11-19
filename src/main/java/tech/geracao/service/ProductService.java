@@ -16,12 +16,14 @@ import tech.geracao.view.dtoResponse.ProductResponse;
 
 import java.util.*;
 
+// ProductService — Camada de negócio dos produtos, incluindo filtros dinâmicos e montagem das respostas.
 @ApplicationScoped
 public class ProductService {
     @Inject RepositoryProduct productRepository;
     @Inject RepositoryCategory categoryRepository;
 
     @Transactional
+    // Monta os filtros da consulta, aplica paginação e prepara a resposta.
     public List<ProductResponse> listar(Integer limit, int page, String match,
                                        List<Integer> categoryIds, Float minPrice, Float maxPrice,
                                        Map<Integer, List<String>> optionFilters) {
@@ -60,11 +62,13 @@ public class ProductService {
             index++;
         }
 
-        PanacheQuery<EntityProduct> query = EntityProduct.find(jpql.toString(), Sort.by("id").ascending(), params);
+        PanacheQuery<EntityProduct> query = EntityProduct.find("from EntityProduct p where " + jpql,
+                Sort.by("id").ascending(), params);
         if (limit != -1) query.page(Page.of(Math.max(page - 1, 0), limit));
         return query.list().stream().map(this::toResponse).toList();
     }
 
+    // Conta quantos registros correspondem aos filtros da busca.
     public long contar(String match, List<Integer> categoryIds, Float minPrice, Float maxPrice,
                        Map<Integer, List<String>> optionFilters) {
         StringBuilder jpql = new StringBuilder("1 = 1");
@@ -91,9 +95,11 @@ public class ProductService {
             }
             jpql.append("))"); params.put(optionIdParam, entry.getKey()); index++;
         }
-        return EntityProduct.count(jpql.toString(), params);
+        PanacheQuery<EntityProduct> query = EntityProduct.find("from EntityProduct p where " + jpql, params);
+        return query.count();
     }
 
+    // Retorna um registro pelo ID ou informa que ele não existe.
     public ProductResponse buscarPorId(Integer id) {
         EntityProduct product = productRepository.findById(id);
         if (product == null) throw new NotFoundException("Produto não encontrado");
@@ -101,6 +107,7 @@ public class ProductService {
     }
 
     @Transactional
+    // Valida os dados e persiste o novo registro.
     public ProductResponse criar(RequestProduct request) {
         validateRequest(request);
         EntityProduct product = new EntityProduct();
@@ -110,6 +117,7 @@ public class ProductService {
     }
 
     @Transactional
+    // Atualiza um registro existente preservando o identificador original.
     public ProductResponse atualizar(Integer id, RequestProduct request) {
         EntityProduct product = productRepository.findById(id);
         if (product == null) throw new NotFoundException("Produto não encontrado");
@@ -119,12 +127,14 @@ public class ProductService {
     }
 
     @Transactional
+    // Remove o registro e seus dados dependentes por cascata.
     public void deletar(Integer id) {
         EntityProduct product = productRepository.findById(id);
         if (product == null) throw new NotFoundException("Produto não encontrado");
         productRepository.delete(product);
     }
 
+    // Garante que os campos indispensáveis do produto foram informados.
     private void validateRequest(RequestProduct request) {
         if (request == null || request.name() == null || request.name().isBlank())
             throw new BadRequestException("Nome do produto é obrigatório");
@@ -134,6 +144,7 @@ public class ProductService {
             throw new BadRequestException("Preço e preço com desconto são obrigatórios");
     }
 
+    // Copia os dados da requisição e monta os relacionamentos da entidade.
     private void apply(EntityProduct product, RequestProduct request) {
         product.enabled = request.enabled() != null ? request.enabled() : false;
         product.name = request.name(); product.slug = request.slug();
@@ -174,6 +185,7 @@ public class ProductService {
         }
     }
 
+    // Converte uma entidade no formato seguro utilizado pela API.
     private ProductResponse toResponse(EntityProduct p) {
         List<Integer> categoryIds = p.categories == null ? List.of() : p.categories.stream().filter(Objects::nonNull).map(c -> c.id).toList();
         List<ProductResponse.ImageResponse> images = p.images == null ? List.of() : p.images.stream()

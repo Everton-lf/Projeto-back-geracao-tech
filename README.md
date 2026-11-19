@@ -1,92 +1,338 @@
-# code-with-quarkus
+# API E-commerce - Geração Tech
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+API REST em Java 21 e Quarkus 3 para usuários, categorias e produtos, com autenticação JWT, MySQL e migrations Flyway.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 1. Primeira execução
 
-## Swagger / OpenAPI
+### Pré-requisitos
 
-A documentação Swagger da API está disponível via OpenAPI e Swagger UI quando a aplicação estiver em execução.
+- Java JDK 21
+- Git
+- MySQL 8 ou compatível
+- Maven Wrapper incluído no projeto
 
-- OpenAPI JSON: http://localhost:8080/q/openapi
-- Swagger UI: http://localhost:8080/q/swagger-ui
+### Configurar o banco
 
-Para habilitar a UI em todos os perfis, o projeto usa a configuração:
+A configuração padrão usa:
+
+- Host: `127.0.0.1`
+- Porta: `3308`
+- Banco: `projetofinal`
+- Usuário: `root`
+- Senha: `admin`
+
+As propriedades ficam em `src/main/resources/application.properties`:
 
 ```properties
-quarkus.swagger-ui.always-include=true
+quarkus.datasource.username=root
+quarkus.datasource.password=admin
+quarkus.datasource.jdbc.url=jdbc:mysql://127.0.0.1:3308/projetofinal?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 ```
 
-## Running the application in dev mode
+Altere os valores caso o seu banco use credenciais diferentes.
 
-You can run your application in dev mode that enables live coding using:
+### Iniciar pela primeira vez
 
-```shell script
+No PowerShell:
+
+```powershell
+cd D:\Desenvolvimento\ProjetoFinalTech\code-with-quarkus
+.\mvnw.cmd quarkus:dev
+```
+
+No Git Bash ou terminal Unix:
+
+```shell
+cd /d/Desenvolvimento/ProjetoFinalTech/code-with-quarkus
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+O Flyway executará automaticamente as migrations ao iniciar. Aguarde a aplicação entrar no modo `Listening on`.
 
-## Packaging and running the application
+Endereços:
 
-The application can be packaged using:
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui
+- OpenAPI JSON: http://localhost:8080/openapi
 
-```shell script
-./mvnw package
+## 2. Criar o primeiro usuário
+
+A criação de usuário é pública. O cadastro não exige token.
+
+### Modelo do corpo — `RequestUser`
+
+```json
+{
+  "firstName": "Joao",
+  "surname": "Silva",
+  "email": "joao@email.com",
+  "password": "senha123"
+}
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Campos:
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+- `firstName`: nome, obrigatório
+- `surname`: sobrenome, obrigatório
+- `email`: e-mail válido e único, obrigatório
+- `password`: senha, obrigatória
 
-If you want to build an _über-jar_, execute the following command:
+### Requisição
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+- Método: `POST`
+- Rota: `http://localhost:8080/v1/usuarios`
+- Header: `Content-Type: application/json`
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/v1/usuarios" `
+  -ContentType "application/json" `
+  -Body '{"firstName":"Joao","surname":"Silva","email":"joao@email.com","password":"senha123"}'
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+Resposta esperada:
 
-## Creating a native executable
+- Status: `201 Created`
+- Modelo: `ResponseUser`
 
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
+```json
+{
+  "id": 1,
+  "firstName": "Joao",
+  "surname": "Silva",
+  "email": "joao@email.com"
+}
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+A senha nunca é retornada pela API. Ela é armazenada criptografada com BCrypt.
 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+## 3. Gerar o token de acesso
+
+Com o usuário criado, use o e-mail e a senha para entrar no sistema.
+
+### Modelo do corpo — `RequestLogin`
+
+```json
+{
+  "email": "joao@email.com",
+  "password": "senha123"
+}
 ```
 
-You can then execute your native executable with: `./target/code-with-quarkus-1.0.0-SNAPSHOT-runner`
+Campos:
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+- `email`: e-mail usado no cadastro
+- `password`: senha usada no cadastro
 
-## Related Guides
+### Requisição
 
-- Hibernate ORM ([guide](https://quarkus.io/guides/hibernate-orm)): Object-relational mapping with JPA/Hibernate for relational database access
-- Hibernate Validator ([guide](https://quarkus.io/guides/validation)): Bean validation using Hibernate Validator and Jakarta Validation annotations
-- RESTEasy Classic JSON-B ([guide](https://quarkus.io/guides/rest-json)): JSON-B serialization support for RESTEasy Classic
-- SmallRye JWT ([guide](https://quarkus.io/guides/security-jwt)): Secure your applications with JSON Web Token
-- JDBC Driver - MySQL ([guide](https://quarkus.io/guides/datasource)): Connect to the MySQL database via JDBC
+- Método: `POST`
+- Rota: `http://localhost:8080/v1/usuarios/token`
+- Header: `Content-Type: application/json`
 
-## Provided Code
+PowerShell:
 
-### Hibernate ORM
+```powershell
+$response = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/v1/usuarios/token" `
+  -ContentType "application/json" `
+  -Body '{"email":"joao@email.com","password":"senha123"}'
 
-Create your first JPA entity
+$token = $response.token
+$token
+```
 
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
+Resposta esperada:
 
+- Status: `200 OK`
+- Modelo: `ResponseToken`
 
+```json
+{
+  "token": "eyJraWQiOiJ..."
+}
+```
 
+O token pertence ao grupo `User` e expira em duas horas.
 
-### RESTEasy JAX-RS
+## 4. Liberar as rotas protegidas
 
-Easily start your RESTful Web Services
+Após gerar o token, envie-o em todas as operações protegidas:
 
-[Related guide section...](https://quarkus.io/guides/getting-started#the-jax-rs-resources)
+```text
+Authorization: Bearer SEU_TOKEN_JWT
+```
+
+Exemplo no PowerShell:
+
+```powershell
+$headers = @{
+  Authorization = "Bearer $token"
+}
+
+Invoke-RestMethod `
+  -Method Get `
+  -Uri "http://localhost:8080/v1/usuarios" `
+  -Headers $headers
+```
+
+### Autorizar no Swagger
+
+1. Abra http://localhost:8080/swagger-ui.
+2. Clique em **Authorize**.
+3. Informe apenas o conteúdo do campo `token`, sem escrever `Bearer`.
+4. Clique em **Authorize** e depois em **Close**.
+5. Execute os endpoints marcados como protegidos.
+
+Observação: o Swagger adiciona o prefixo `Bearer` ao enviar o header.
+
+## 5. Rotas protegidas e públicas
+
+### Usuários
+
+| Operação | Método | Rota | Acesso |
+|---|---|---|---|
+| Criar usuário | POST | `/v1/usuarios` | Público |
+| Gerar token | POST | `/v1/usuarios/token` | Público |
+| Listar usuários | GET | `/v1/usuarios` | Público |
+| Buscar usuário | GET | `/v1/usuarios/{id}` | Público |
+| Atualizar usuário | PUT | `/v1/usuarios/{id}` | JWT |
+| Excluir usuário | DELETE | `/v1/usuarios/{id}` | JWT |
+
+Modelo para atualizar usuário:
+
+```json
+{
+  "firstName": "Joao",
+  "surname": "Silva",
+  "email": "joao@email.com",
+  "password": "nova-senha"
+}
+```
+
+### Categorias
+
+| Operação | Método | Rota | Acesso |
+|---|---|---|---|
+| Buscar categorias | GET | `/v1/category/search` | Público |
+| Buscar categoria | GET | `/v1/category/{id}` | Público |
+| Criar categoria | POST | `/v1/category` | JWT |
+| Atualizar categoria | PUT | `/v1/category/{id}` | JWT |
+| Excluir categoria | DELETE | `/v1/category/{id}` | JWT |
+
+Modelo `CategoryResponse`:
+
+```json
+{
+  "id": null,
+  "name": "Cadeiras",
+  "slug": "cadeiras",
+  "useInMenu": true
+}
+```
+
+Ao criar, envie `id` como `null` ou omita o campo.
+
+Exemplo protegido:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/v1/category" `
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body '{"name":"Cadeiras","slug":"cadeiras","useInMenu":true}'
+```
+
+### Produtos
+
+| Operação | Método | Rota | Acesso |
+|---|---|---|---|
+| Buscar produtos | GET | `/v1/product/search` | Público |
+| Buscar produto | GET | `/v1/product/{id}` | Público |
+| Criar produto | POST | `/v1/product` | JWT |
+| Atualizar produto | PUT | `/v1/product/{id}` | JWT |
+| Excluir produto | DELETE | `/v1/product/{id}` | JWT |
+
+Modelo `RequestProduct`:
+
+```json
+{
+  "enabled": true,
+  "name": "Cadeira Gamer",
+  "slug": "cadeira-gamer",
+  "stock": 10,
+  "description": "Cadeira confortável",
+  "price": 1500.0,
+  "priceWithDiscount": 1299.0,
+  "categoryIds": [1],
+  "images": [
+    {
+      "id": null,
+      "content": "/imagens/cadeira-gamer.jpg",
+      "path": null,
+      "enabled": true
+    }
+  ],
+  "options": [
+    {
+      "id": null,
+      "title": "Cor",
+      "shape": "circle",
+      "radius": 12,
+      "type": "color",
+      "values": "Preto,Vermelho"
+    }
+  ]
+}
+```
+
+Exemplo protegido:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/v1/product" `
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body '{"enabled":true,"name":"Cadeira Gamer","slug":"cadeira-gamer","stock":10,"description":"Cadeira confortável","price":1500,"priceWithDiscount":1299,"categoryIds":[1],"images":[],"options":[]}'
+```
+
+## 6. Fluxo completo recomendado
+
+1. Inicie o MySQL.
+2. Inicie a API com `./mvnw quarkus:dev`.
+3. Crie o usuário em `POST /v1/usuarios`.
+4. Gere o token em `POST /v1/usuarios/token`.
+5. Copie o campo `token` da resposta.
+6. Envie `Authorization: Bearer SEU_TOKEN` nas rotas protegidas.
+7. No Swagger, use o botão **Authorize** e informe somente o token.
+8. Crie categorias e produtos.
+
+## 7. Status HTTP
+
+- `200 OK`: consulta ou atualização concluída
+- `201 Created`: recurso criado
+- `204 No Content`: exclusão concluída sem corpo
+- `400 Bad Request`: dados inválidos
+- `401 Unauthorized`: credenciais ou token inválido
+- `404 Not Found`: recurso inexistente
+
+## 8. Testes
+
+```powershell
+.\mvnw.cmd test
+```
+
+Os testes cobrem autenticação, CRUD, filtros, validações e status HTTP. O relatório JaCoCo fica em `target/jacoco-report/index.html`.
+
+## 9. Empacotamento
+
+```powershell
+.\mvnw.cmd package
+java -jar target\quarkus-app\quarkus-run.jar
+```

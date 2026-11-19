@@ -1,5 +1,6 @@
 package tech.geracao.view.dtoRequest;
 
+// RequestProduct — Dados enviados para criar ou atualizar um produto completo.
 import java.util.List;
 
 public record RequestProduct(

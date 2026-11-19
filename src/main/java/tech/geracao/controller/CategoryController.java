@@ -1,8 +1,10 @@
 package tech.geracao.controller;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -14,6 +16,7 @@ import tech.geracao.view.dtoResponse.CategorySearchResponse;
 
 import java.util.*;
 
+// CategoryController — Controlador REST responsável pelo CRUD e pela busca de categorias.
 @Path("/v1/category")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -37,6 +40,7 @@ public class CategoryController {
             )
     )
     @Path("/search")
+    // Normaliza parâmetros, consulta categorias e monta a resposta paginada.
     public CategorySearchResponse buscarCategorias(
             @QueryParam("limit") @DefaultValue("12") Integer limit,
             @QueryParam("page") @DefaultValue("1") Integer page,
@@ -59,6 +63,7 @@ public class CategoryController {
         );
     }
 
+    // Seleciona quais campos da categoria serão incluídos na resposta.
     private Map<String, Object> buildData(CategoryResponse categoria, String fields, Boolean useInMenu) {
         LinkedHashMap<String, Object> data = new LinkedHashMap<>();
         Set<String> selected = normalizeFields(fields);
@@ -80,6 +85,7 @@ public class CategoryController {
         return data;
     }
 
+    // Converte a lista de campos solicitados em um conjunto normalizado.
     private Set<String> normalizeFields(String fields) {
         if (fields == null || fields.isBlank()) {
             return new LinkedHashSet<>();
@@ -110,10 +116,11 @@ public class CategoryController {
                     schema = @Schema(implementation = CategorySearchResponse.class)
             )
     )
+    // Busca uma categoria pelo ID ou informa que ela não existe.
     public CategoryResponse buscarCategoriaPorId(@PathParam("id") Integer id) {
         return categoryService.buscarCategoriaPorId(id);
     }
-
+    @RolesAllowed("User")
     @DELETE
     @Path("/{id}")
     @Operation(
@@ -121,22 +128,16 @@ public class CategoryController {
             description = "Remove uma categoria específica do sistema."
     )
     @APIResponse(
-            responseCode = "200",
-            description = "Categoria deletada com sucesso",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = CategorySearchResponse.class)
-            )
-    )
-    @APIResponse(
             responseCode = "204",
             description = "Categoria deletada com sucesso, sem conteúdo de resposta"
 
     )
-    public void deletarCategoria(@PathParam("id") Integer id) {
+    // Remove uma categoria existente.
+    public Response deletarCategoria(@PathParam("id") Integer id) {
         categoryService.deletarCategoria(id);
+        return Response.noContent().build();
     }
-
+    @RolesAllowed("User")
     @PUT
     @Path("/{id}")
     @Operation(
@@ -154,7 +155,7 @@ public class CategoryController {
     public CategoryResponse atualizarCategoria(@PathParam("id") Integer id, CategoryResponse categoryResponse) {
         return categoryService.editarCategoria(id, categoryResponse);
     }
-
+    @RolesAllowed("User")
     @POST
     @Operation(
             summary = "Criar Categoria",
@@ -168,8 +169,10 @@ public class CategoryController {
                     schema = @Schema(implementation = CategorySearchResponse.class)
             )
     )
-    public CategoryResponse criarCategoria(CategoryResponse categoryResponse) {
-        return categoryService.criarCategoria(categoryResponse);
+    // Cria e persiste uma nova categoria.
+    public Response criarCategoria(CategoryResponse categoryResponse) {
+        CategoryResponse categoriaCriada = categoryService.criarCategoria(categoryResponse);
+        return Response.status(Response.Status.CREATED).entity(categoriaCriada).build();
     }
 
 

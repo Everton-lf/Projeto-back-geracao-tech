@@ -8,10 +8,12 @@ import jakarta.ws.rs.ext.Provider;
 
 import java.time.LocalDateTime;
 
+// NotFoundExceptionMapper — Converte recursos não encontrados em respostas JSON com status 404.
 @Provider
 public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
 
     @Override
+    // Converte uma entidade no formato seguro utilizado pela API.
     public Response toResponse(NotFoundException exception) {
         ErroResponse erro = new ErroResponse(
                 Response.Status.NOT_FOUND.getStatusCode(),

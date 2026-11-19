@@ -1,6 +1,7 @@
 package tech.geracao.view.dtoResponse;
 
 import java.util.List;
+// CategorySearchResponse — Envelope da busca de categorias com dados selecionados e paginação.
 import java.util.Map;
 
 public record CategorySearchResponse(

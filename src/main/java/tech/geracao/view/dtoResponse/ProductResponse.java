@@ -1,5 +1,6 @@
 package tech.geracao.view.dtoResponse;
 
+// ProductResponse — Representação completa de um produto, incluindo categorias, imagens e opções.
 import java.util.List;
 
 public record ProductResponse(

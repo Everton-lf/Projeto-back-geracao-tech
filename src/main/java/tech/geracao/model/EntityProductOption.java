@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
+// EntityProductOption — Representa uma opção configurável de produto, como tamanho ou cor.
 @Entity
 @Table(name = "product_options")
 public class EntityProductOption extends PanacheEntityBase {
