@@ -1,5 +1,11 @@
 # API E-commerce - Geração Tech
 
+## 👥 Integrantes da Equipe
+
+- **Antonio Lucas da Costa Pereira**
+- **Everton Lucas Fernandes**
+- **Rubens Paulo Rodrigues Parente**
+
 API REST em Java 21 e Quarkus 3 para usuários, categorias e produtos, com autenticação JWT, MySQL e migrations Flyway.
 
 ## 1. Primeira execução
