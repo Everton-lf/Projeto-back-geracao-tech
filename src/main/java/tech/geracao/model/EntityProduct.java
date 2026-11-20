@@ -32,10 +32,10 @@ public class EntityProduct extends PanacheEntityBase {
 
     public String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "DECIMAL(10, 2)")
     public Float price;
 
-    @Column(name = "price_with_discount", nullable = false)
+    @Column(name = "price_with_discount", nullable = false, columnDefinition = "DECIMAL(10, 2)")
     public Float priceWithDiscount;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
